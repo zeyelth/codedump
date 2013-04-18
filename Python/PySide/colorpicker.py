@@ -48,10 +48,9 @@ def _draw_checkerboard(painter, rect, size):
     painter.restore()
 
 
-class ColorPicker(QtGui.QWidget):
+class ColorWidget(QtGui.QWidget):
     """
-    A compact color picker widget with a hue, and saturation wheel.
-    Additional sliders for value, red, green, blue and alpha channels.
+    Base class for widgets manipulating colors.
     """
 
     colorChanged = QtCore.Signal(QtGui.QColor)
@@ -60,11 +59,51 @@ class ColorPicker(QtGui.QWidget):
     """
 
     def __init__(self, parent=None):
+        super(ColorWidget, self).__init__(parent)
+
+        self._color = QtGui.QColor()
+
+    def color(self):
+        """
+        The QColor represented by this widget.
+        :return: A color
+        :rtype: QColor
+        """
+        return QtGui.QColor(self._color)
+
+    def updateColor(self, color):
+        """
+        Updates the color represented by this widget.
+        Does not emit a signal.
+        :param color: The new color.
+        :type color: QColor
+        """
+        self._color = QtGui.QColor(color)
+        self.repaint()
+
+    def setColor(self, color):
+        """
+        Updates the color represented by this widget.
+        Emits a colorChanged signal.
+        :param color: The new color.
+        :type color: QColor
+        """
+        self.updateColor(color)
+        self.colorChanged.emit(self.color())
+
+
+class ColorPicker(ColorWidget):
+    """
+    A compact color picker widget with a hue, and saturation wheel.
+    Additional sliders for value, red, green, blue and alpha channels.
+    """
+
+    def __init__(self, parent=None):
         """
         Constructs a ColorPicker instance.
         :param parent: parent widget (optional)
         """
-        super(ColorPicker, self).__init__(parent)
+        super(ColorWidget, self).__init__(parent)
 
         layout = QtGui.QVBoxLayout()
         self._hex = ColorHexEdit()
@@ -189,30 +228,16 @@ class ColorPicker(QtGui.QWidget):
 
         self._wheel.setColor(QtGui.QColor(255, 255, 255, 255))
 
-    def color(self):
-        """
-        The QColor represented by this widget.
-        :return: A color
-        :rtype: QColor
-        """
-        return self._wheel.color()
-
     def _color_broadcaster(self, color):
         for x in self._connection_list:
             if x is not self.sender():
                 x.updateColor(color)
 
 
-class ColorHexEdit(QtGui.QWidget):
+class ColorHexEdit(ColorWidget):
     """
     A text editing widget, configured to manipulate color values on the form of #AARRGGBB,
     where AA, RR, GG, and BB represents the alpha, red, green and blue channels.
-    """
-
-    colorChanged = QtCore.Signal(QtGui.QColor)
-    """
-    Emitted when the text representation is updated to a valid color,
-    either via user interaction, or calls to setColor. Contains a matching QColor.
     """
 
     def __init__(self, parent=None):
@@ -237,8 +262,7 @@ class ColorHexEdit(QtGui.QWidget):
         font.setStyleHint(QtGui.QFont.TypeWriter)
         self._line_edit.setFont(font)
 
-        self._color = QtGui.QColor(0, 0, 0, 0)
-        self.setColor(self._color)
+        self.updateColor(self.color())
 
         self._line_edit.textEdited.connect(self._on_text_edited)
 
@@ -253,33 +277,15 @@ class ColorHexEdit(QtGui.QWidget):
 
         return "{1:0{0}x}{2:0{0}x}{3:0{0}x}{4:0{0}x}".format(2, a, r, g, b)
 
-    def color(self):
-        """
-        The QColor represented by this widget.
-        :return: A color
-        :rtype: QColor
-        """
-        return self._color
-
     def updateColor(self, color):
         """
+        Overridden from base class.
         Updates the text string to match the provided color.
-        Does not emit a signal.
         :param color: The new color.
         :type color: QColor
         """
         self._line_edit.setText(self._color_to_string(color))
-        self._color = color
-
-    def setColor(self, color):
-        """
-        Updates the text string to match the provided color.
-        Emits a colorChanged signal.
-        :param color: The new color.
-        :type color: QColor
-        """
-        self.updateColor(color)
-        self.colorChanged.emit(self._color)
+        super(ColorHexEdit, self).updateColor(color)
 
     def _on_text_edited(self, text):
         if len(text) != 8:
@@ -299,7 +305,7 @@ class ColorHexEdit(QtGui.QWidget):
         self.colorChanged.emit(self._color)
 
 
-class ColorDisplay(QtGui.QWidget):
+class ColorDisplay(ColorWidget):
     """
     A simple widget for displaying a color, including alpha values.
     """
@@ -308,10 +314,6 @@ class ColorDisplay(QtGui.QWidget):
     """
     Emitted when the widget is clicked on.
     """
-    colorChanged = QtCore.Signal(QtGui.QColor)
-    """
-    Emitted when the setColor is called. Contains a matching QColor.
-    """
 
     def __init__(self, parent=None):
         """
@@ -319,36 +321,6 @@ class ColorDisplay(QtGui.QWidget):
         :param parent: parent widget (optional)
         """
         super(ColorDisplay, self).__init__(parent)
-
-        self._color = QtGui.QColor(0, 0, 0, 0)
-
-    def color(self):
-        """
-        The QColor represented by this widget.
-        :return: A color
-        :rtype: QColor
-        """
-        return self._color
-
-    def updateColor(self, color):
-        """
-        Updates the color represented by this widget.
-        Does not emit a signal.
-        :param color: The new color.
-        :type color: QColor
-        """
-        self._color = color
-        self.repaint()
-
-    def setColor(self, color):
-        """
-        Updates the color represented by this widget.
-        Emits a colorChanged signal.
-        :param color: The new color.
-        :type color: QColor
-        """
-        self.updateColor(color)
-        self.colorChanged.emit(self._color)
 
     def mouseReleasedEvent(self, event):
         self.clicked.emit()
@@ -366,16 +338,10 @@ class ColorDisplay(QtGui.QWidget):
         painter.restore()
 
 
-class ComponentSlider(QtGui.QWidget):
+class ComponentSlider(ColorWidget):
     """
     A custom slider for manipulating a color component.
     Although it only manipulates a single component, it holds a QColor for convenience.
-    """
-
-    colorChanged = QtCore.Signal(QtGui.QColor)
-    """
-    Emitted when the color changes. Either via user interaction, or calls to setColor.
-    Contains a matching QColor.
     """
 
     Horizontal = 0
@@ -406,38 +372,9 @@ class ComponentSlider(QtGui.QWidget):
 
         self._direction = self.Horizontal
 
-        self._color = QtGui.QColor(0, 0, 0)
         self._gradient_color1 = QtCore.Qt.white
         self._gradient_color2 = QtCore.Qt.black
         self._component = component
-
-    def color(self):
-        """
-        The QColor contained in this widget.
-        :return: A color
-        :rtype: QColor
-        """
-        return self._color
-
-    def setColor(self, color):
-        """
-        Updates the color contained in this widget.
-        Emits a colorChanged signal.
-        :param color: The new color.
-        :type color: QColor
-        """
-        self.updateColor(color)
-        self.colorChanged.emit(self._color)
-
-    def updateColor(self, color):
-        """
-        Updates the color contained in this widget.
-        Does not emit a signal.
-        :param color: The new color.
-        :type color: QColor
-        """
-        self._color = color
-        self.repaint()
 
     def setActiveComponent(self, component):
         """
@@ -581,15 +518,9 @@ class ComponentSlider(QtGui.QWidget):
         painter.restore()
 
 
-class HueSaturationWheel(QtGui.QWidget):
+class HueSaturationWheel(ColorWidget):
     """
     A color wheel for manipulating the hue and saturation of a given QColor.
-    """
-
-    colorChanged = QtCore.Signal(QtGui.QColor)
-    """
-    Emitted when the color changes. Either via user interaction, or calls to setColor.
-    Contains a matching QColor.
     """
 
     def __init__(self, parent=None):
@@ -605,14 +536,6 @@ class HueSaturationWheel(QtGui.QWidget):
         self._wheel_img = None
         self._marker_pos = QtCore.QPointF(0, 0)
 
-    def color(self):
-        """
-        The QColor represented by this widget.
-        :return: A color
-        :rtype: QColor
-        """
-        return self._color
-
     def updateColor(self, color):
         """
         Updates the color represented by this widget.
@@ -623,6 +546,8 @@ class HueSaturationWheel(QtGui.QWidget):
 
         if color.rgb() == self._color.rgb():
             return
+
+        old_value = self._color.value()
 
         square = self._square()
 
@@ -642,17 +567,10 @@ class HueSaturationWheel(QtGui.QWidget):
 
         self._update_color(line.p2())
         self._update_marker_pos()
-        self._rebuild_color_wheel()
+        if old_value != color.value():
+            self._rebuild_color_wheel()
 
-    def setColor(self, color):
-        """
-        Updates the color contained in this widget.
-        Emits a colorChanged signal.
-        :param color: The new color.
-        :type color: QColor
-        """
-        self.updateColor(color)
-        self.colorChanged.emit(self._color)
+        super(HueSaturationWheel, self).updateColor(color)
 
     def _length2(self, p1, p2):
         return pow((p2.x() - p1.x()), 2) + pow((p2.y() - p1.y()), 2)
@@ -675,8 +593,6 @@ class HueSaturationWheel(QtGui.QWidget):
         a = self._color.alphaF()
         self._color.setHsvF(h, s, v)
         self._color.setAlphaF(a)
-
-        self.repaint()
 
     def _square(self):
         rect = self.rect()
@@ -760,16 +676,19 @@ class HueSaturationWheel(QtGui.QWidget):
     def mousePressEvent(self, event):
         self._update_color(event.pos())
         self._update_marker_pos()
-        self.colorChanged.emit(self._color)
+        self.repaint()
+        self.colorChanged.emit(self.color())
 
     def mouseMoveEvent(self, event):
         self._update_color(event.pos())
         self._update_marker_pos()
-        self.colorChanged.emit(self._color)
+        self.repaint()
+        self.colorChanged.emit(self.color())
 
     def mouseReleaseEvent(self, event):
         self._update_color(event.pos())
         self._update_marker_pos()
+        self.repaint()
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
