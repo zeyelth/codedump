@@ -105,8 +105,10 @@ class ColorPicker(ColorWidget):
         """
         super(ColorWidget, self).__init__(parent)
 
-        layout = QtGui.QVBoxLayout()
+        layout = QtGui.QHBoxLayout()
         self._hex = ColorHexEdit()
+
+        layout.setContentsMargins(0, 0, 0, 0)
 
         self._display = ColorDisplay()
         self._display.setMinimumSize(15, 15)
@@ -114,124 +116,195 @@ class ColorPicker(ColorWidget):
         size_policy.setHorizontalPolicy(QtGui.QSizePolicy.Minimum)
         self._display.setSizePolicy(size_policy)
 
-        top_layout = QtGui.QHBoxLayout()
-        top_layout.addWidget(self._display)
-        top_layout.addWidget(self._hex)
-        top_layout.addStretch(100)
-
-        self._wheel = HueSaturationWheel()
-        size_policy = QtGui.QSizePolicy()
-        size_policy.setVerticalPolicy(QtGui.QSizePolicy.Expanding)
-        size_policy.setHorizontalPolicy(QtGui.QSizePolicy.Expanding)
-        self._wheel.setSizePolicy(size_policy)
-
-        size = 10
-
-        self._value_slider = ComponentSlider(ComponentSlider.hsvValue)
-        self._value_slider.setMinimumWidth(size)
-        self._value_slider.setDirection(ComponentSlider.Vertical)
-        self._value_slider.setGradient(QtCore.Qt.black, QtCore.Qt.white)
-
-        self._red_slider = ComponentSlider(ComponentSlider.rgbaRed)
-        self._red_slider.setMinimumHeight(size)
-        self._red_slider.setMaximumHeight(size)
-        self._red_slider.setContentsMargins(4, 0, 0, 0)
-        self._red_slider.setDirection(ComponentSlider.Horizontal)
-        self._red_slider.setGradient(QtCore.Qt.black, QtCore.Qt.red)
-
-        self._green_slider = ComponentSlider(ComponentSlider.rgbaGreen)
-        self._green_slider.setMinimumHeight(size)
-        self._green_slider.setMaximumHeight(size)
-        self._green_slider.setDirection(ComponentSlider.Horizontal)
-        self._green_slider.setGradient(QtCore.Qt.black, QtCore.Qt.green)
-
-        self._blue_slider = ComponentSlider(ComponentSlider.rgbaBlue)
-        self._blue_slider.setMinimumHeight(size)
-        self._blue_slider.setMaximumHeight(size)
-        self._blue_slider.setDirection(ComponentSlider.Horizontal)
-        self._blue_slider.setGradient(QtCore.Qt.black, QtCore.Qt.blue)
-
-        self._alpha_slider = ComponentSlider(ComponentSlider.rgbaAlpha)
-        self._alpha_slider.setMinimumHeight(size)
-        self._alpha_slider.setMaximumHeight(size)
-        self._alpha_slider.setDirection(ComponentSlider.Horizontal)
-        self._alpha_slider.setGradient(QtGui.QColor(255, 255, 255, 0), QtGui.QColor(255, 255, 255, 255))
-
-        mid_layout = QtGui.QHBoxLayout()
-        mid_layout.addWidget(self._wheel)
-        mid_layout.addWidget(self._value_slider)
-
-        font = QtGui.QFont("Monospace")
-        font.setStyleHint(QtGui.QFont.TypeWriter)
-
-        label = QtGui.QLabel("R")
-        label.setFont(font)
-        label.setMaximumHeight(size)
-        label.setMinimumWidth(10)
-        label.setMaximumWidth(10)
-        r_layout = QtGui.QHBoxLayout()
-        r_layout.addWidget(label)
-        r_layout.addWidget(self._red_slider)
-
-        label = QtGui.QLabel("G")
-        label.setFont(font)
-        label.setMaximumHeight(size)
-        label.setMinimumWidth(10)
-        label.setMaximumWidth(10)
-        g_layout = QtGui.QHBoxLayout()
-        g_layout.addWidget(label)
-        g_layout.addWidget(self._green_slider)
-
-        label = QtGui.QLabel("B")
-        label.setFont(font)
-        label.setMaximumHeight(size)
-        label.setMinimumWidth(10)
-        label.setMaximumWidth(10)
-        b_layout = QtGui.QHBoxLayout()
-        b_layout.addWidget(label)
-        b_layout.addWidget(self._blue_slider)
-
-        label = QtGui.QLabel("A")
-        label.setFont(font)
-        label.setMaximumHeight(size)
-        label.setMinimumWidth(10)
-        label.setMaximumWidth(10)
-        a_layout = QtGui.QHBoxLayout()
-        a_layout.addWidget(label)
-        a_layout.addWidget(self._alpha_slider)
-
-        bottom_layout = QtGui.QVBoxLayout()
-        bottom_layout.setSpacing(2)
-        bottom_layout.addLayout(r_layout)
-        bottom_layout.addLayout(g_layout)
-        bottom_layout.addLayout(b_layout)
-        bottom_layout.addLayout(a_layout)
-
-        layout.addLayout(top_layout)
-        layout.addLayout(mid_layout)
-        layout.addLayout(bottom_layout)
+        layout.addWidget(self._display)
+        layout.addWidget(self._hex)
 
         self.setLayout(layout)
+        layout.setSizeConstraint(QtGui.QLayout.SetFixedSize)
 
-        self._connection_list = [self._wheel,
-                          self._hex,
+        self._popup = ColorPicker._Popup(self)
+        self._popup.setMinimumSize(180, 250)
+        self._popup.setMaximumSize(180, 250)
+
+        self._display.clicked.connect(self._on_display_clicked)
+
+        self._connection_list = [self._hex,
                           self._display,
-                          self._value_slider,
-                          self._red_slider,
-                          self._green_slider,
-                          self._blue_slider,
-                          self._alpha_slider]
+                          self._popup]
 
         for x in self._connection_list:
-            x.colorChanged.connect(self._color_broadcaster)
+            x.colorChanged.connect(self.updateColor)
             x.colorChanged.connect(self.colorChanged)
 
-        self._wheel.setColor(QtGui.QColor(255, 255, 255, 255))
+        self.setColor(QtGui.QColor(255, 255, 255, 255))
 
-    def _color_broadcaster(self, color):
+    def updateColor(self, color):
+        """
+        Updates the color represented by this widget,
+        and all child widgets in it.
+        Does not emit a signal.
+        :param color: The new color.
+        :type color: QColor
+        """
         for x in self._connection_list:
             if x is not self.sender():
                 x.updateColor(color)
+        super(ColorPicker, self).updateColor(color)
+
+    def _on_display_clicked(self):
+        self._popup.move(self.mapToGlobal(self.rect().topLeft()))
+        self._popup.show()
+
+    class _Popup(ColorWidget):
+
+        def __init__(self, parent=None):
+            """
+            Constructs a ColorPicker instance.
+            :param parent: parent widget (optional)
+            """
+            super(ColorWidget, self).__init__(parent)
+
+            self.setWindowFlags(QtCore.Qt.Popup)
+
+            layout = QtGui.QVBoxLayout()
+            self._hex = ColorHexEdit()
+
+            self._display = ColorDisplay()
+            self._display.setMinimumSize(15, 15)
+            size_policy = QtGui.QSizePolicy()
+            size_policy.setHorizontalPolicy(QtGui.QSizePolicy.Minimum)
+            self._display.setSizePolicy(size_policy)
+
+            top_layout = QtGui.QHBoxLayout()
+            top_layout.addWidget(self._display)
+            top_layout.addWidget(self._hex)
+            top_layout.addStretch(100)
+
+            self._wheel = HueSaturationWheel()
+            size_policy = QtGui.QSizePolicy()
+            size_policy.setVerticalPolicy(QtGui.QSizePolicy.Expanding)
+            size_policy.setHorizontalPolicy(QtGui.QSizePolicy.Expanding)
+            self._wheel.setSizePolicy(size_policy)
+
+            size = 10
+
+            self._value_slider = ComponentSlider(ComponentSlider.HSV_VALUE)
+            self._value_slider.setMinimumWidth(size)
+            self._value_slider.setDirection(ComponentSlider.Vertical)
+            self._value_slider.setGradient(QtCore.Qt.black, QtCore.Qt.white)
+
+            self._red_slider = ComponentSlider(ComponentSlider.RGBA_RED)
+            self._red_slider.setMinimumHeight(size)
+            self._red_slider.setMaximumHeight(size)
+            self._red_slider.setContentsMargins(4, 0, 0, 0)
+            self._red_slider.setDirection(ComponentSlider.Horizontal)
+            self._red_slider.setGradient(QtCore.Qt.black, QtCore.Qt.red)
+
+            self._green_slider = ComponentSlider(ComponentSlider.RGBA_GREEN)
+            self._green_slider.setMinimumHeight(size)
+            self._green_slider.setMaximumHeight(size)
+            self._green_slider.setDirection(ComponentSlider.Horizontal)
+            self._green_slider.setGradient(QtCore.Qt.black, QtCore.Qt.green)
+
+            self._blue_slider = ComponentSlider(ComponentSlider.RGBA_BLUE)
+            self._blue_slider.setMinimumHeight(size)
+            self._blue_slider.setMaximumHeight(size)
+            self._blue_slider.setDirection(ComponentSlider.Horizontal)
+            self._blue_slider.setGradient(QtCore.Qt.black, QtCore.Qt.blue)
+
+            self._alpha_slider = ComponentSlider(ComponentSlider.RGBA_ALPHA)
+            self._alpha_slider.setMinimumHeight(size)
+            self._alpha_slider.setMaximumHeight(size)
+            self._alpha_slider.setDirection(ComponentSlider.Horizontal)
+            self._alpha_slider.setGradient(QtGui.QColor(255, 255, 255, 0),
+                                           QtGui.QColor(255, 255, 255, 255))
+
+            mid_layout = QtGui.QHBoxLayout()
+            mid_layout.addWidget(self._wheel)
+            mid_layout.addWidget(self._value_slider)
+            mid_layout.setContentsMargins(5, 0, 5, 0)
+
+            font = QtGui.QFont("Monospace")
+            font.setStyleHint(QtGui.QFont.TypeWriter)
+
+            label = QtGui.QLabel("R")
+            label.setFont(font)
+            label.setMaximumHeight(size)
+            label.setMinimumWidth(10)
+            label.setMaximumWidth(10)
+            r_layout = QtGui.QHBoxLayout()
+            r_layout.addWidget(label)
+            r_layout.addWidget(self._red_slider)
+
+            label = QtGui.QLabel("G")
+            label.setFont(font)
+            label.setMaximumHeight(size)
+            label.setMinimumWidth(10)
+            label.setMaximumWidth(10)
+            g_layout = QtGui.QHBoxLayout()
+            g_layout.addWidget(label)
+            g_layout.addWidget(self._green_slider)
+
+            label = QtGui.QLabel("B")
+            label.setFont(font)
+            label.setMaximumHeight(size)
+            label.setMinimumWidth(10)
+            label.setMaximumWidth(10)
+            b_layout = QtGui.QHBoxLayout()
+            b_layout.addWidget(label)
+            b_layout.addWidget(self._blue_slider)
+
+            label = QtGui.QLabel("A")
+            label.setFont(font)
+            label.setMaximumHeight(size)
+            label.setMinimumWidth(10)
+            label.setMaximumWidth(10)
+            a_layout = QtGui.QHBoxLayout()
+            a_layout.addWidget(label)
+            a_layout.addWidget(self._alpha_slider)
+
+            bottom_layout = QtGui.QVBoxLayout()
+            bottom_layout.setSpacing(2)
+            bottom_layout.addLayout(r_layout)
+            bottom_layout.addLayout(g_layout)
+            bottom_layout.addLayout(b_layout)
+            bottom_layout.addLayout(a_layout)
+
+            layout.addLayout(top_layout)
+            layout.addLayout(mid_layout)
+            layout.addLayout(bottom_layout)
+
+            layout.setContentsMargins(0, 0, 5, 5)
+
+            self.setLayout(layout)
+
+            self._connection_list = [self._wheel,
+                              self._hex,
+                              self._display,
+                              self._value_slider,
+                              self._red_slider,
+                              self._green_slider,
+                              self._blue_slider,
+                              self._alpha_slider]
+
+            for x in self._connection_list:
+                x.colorChanged.connect(self.updateColor)
+                x.colorChanged.connect(self.colorChanged)
+
+            self._wheel.setColor(QtGui.QColor())
+
+        def updateColor(self, color):
+            """
+            Updates the color represented by this widget,
+            and all child widgets in it.
+            Does not emit a signal.
+            :param color: The new color.
+            :type color: QColor
+            """
+            for x in self._connection_list:
+                if x is not self.sender():
+                    x.updateColor(color)
+            super(ColorPicker._Popup, self).updateColor(color)
 
 
 class ColorHexEdit(ColorWidget):
@@ -322,7 +395,7 @@ class ColorDisplay(ColorWidget):
         """
         super(ColorDisplay, self).__init__(parent)
 
-    def mouseReleasedEvent(self, event):
+    def mouseReleaseEvent(self, event):
         self.clicked.emit()
 
     def paintEvent(self, event):
@@ -350,13 +423,13 @@ class ComponentSlider(ColorWidget):
     Direction of the slider.
     """
 
-    hsvHue = 0
-    hsvValue = 1
-    hsvSaturation = 2
-    rgbaRed = 3
-    rgbaGreen = 4
-    rgbaBlue = 5
-    rgbaAlpha = 6
+    HSV_HUE = 0
+    HSV_VALUE = 1
+    HSV_SATURATION = 2
+    RGBA_RED = 3
+    RGBA_GREEN = 4
+    RGBA_BLUE = 5
+    RGBA_ALPHA = 6
     """
     Supported QColor components.
     """
@@ -365,7 +438,7 @@ class ComponentSlider(ColorWidget):
         """
         Constructs a ComponentSlider instance.
         :param component: The component managed by this slider.
-        :type component: Any of class variables hsvHue, hsvValue, hsvSaturation, rgbaRed, rgbaGreen, rgbaBlue, rgbaAlpha
+        :type component: Any of class variables HSV_HUE, HSV_VALUE, HSV_SATURATION, RGBA_RED, RGBA_GREEN, RGBA_BLUE, RGBA_ALPHA
         :param parent: parent widget (optional)
         """
         super(ComponentSlider, self).__init__(parent)
@@ -380,7 +453,7 @@ class ComponentSlider(ColorWidget):
         """
         Sets the color component managed by this slider.
         :param component: The new component.
-        :type component: Any of class variables hsvHue, hsvValue, hsvSaturation, rgbaRed, rgbaGreen, rgbaBlue, rgbaAlpha
+        :type component: Any of class variables HSV_HUE, HSV_VALUE, HSV_SATURATION, RGBA_RED, RGBA_GREEN, RGBA_BLUE, RGBA_ALPHA
         :type color: QColor
         """
         self._component = component
@@ -410,29 +483,29 @@ class ComponentSlider(ColorWidget):
         return val
 
     def _get_component_value(self):
-        if self._component == self.rgbaRed:
+        if self._component == self.RGBA_RED:
             return self._color.redF()
-        if self._component == self.rgbaGreen:
+        if self._component == self.RGBA_GREEN:
             return self._color.greenF()
-        if self._component == self.rgbaBlue:
+        if self._component == self.RGBA_BLUE:
             return self._color.blueF()
-        if self._component == self.rgbaAlpha:
+        if self._component == self.RGBA_ALPHA:
             return self._color.alphaF()
-        if self._component == self.hsvHue:
+        if self._component == self.HSV_HUE:
             return self._color.hsvHueF()
-        if self._component == self.hsvSaturation:
+        if self._component == self.HSV_SATURATION:
             return self._color.hsvSaturationF()
-        if self._component == self.hsvValue:
+        if self._component == self.HSV_VALUE:
             return self._color.valueF()
 
     def _update_color(self, pos):
-        if self._component not in [self.rgbaRed,
-                                   self.rgbaGreen,
-                                   self.rgbaBlue,
-                                   self.rgbaAlpha,
-                                   self.hsvHue,
-                                   self.hsvSaturation,
-                                   self.hsvValue]:
+        if self._component not in [self.RGBA_RED,
+                                   self.RGBA_GREEN,
+                                   self.RGBA_BLUE,
+                                   self.RGBA_ALPHA,
+                                   self.HSV_HUE,
+                                   self.HSV_SATURATION,
+                                   self.HSV_VALUE]:
             return
 
         rect = self.rect()
@@ -442,20 +515,20 @@ class ComponentSlider(ColorWidget):
         else:
             component_value = float(self._clamp(pos.x(), rect.left(), rect.right())) / float(rect.right() - rect.left())
 
-        if self._component in [self.rgbaRed, self.rgbaGreen, self.rgbaBlue, self.rgbaAlpha]:
+        if self._component in [self.RGBA_RED, self.RGBA_GREEN, self.RGBA_BLUE, self.RGBA_ALPHA]:
             c = self._component
-            r = component_value if c == self.rgbaRed else self._color.redF()
-            g = component_value if c == self.rgbaGreen else self._color.greenF()
-            b = component_value if c == self.rgbaBlue else self._color.blueF()
-            a = component_value if c == self.rgbaAlpha else self._color.alphaF()
+            r = component_value if c == self.RGBA_RED else self._color.redF()
+            g = component_value if c == self.RGBA_GREEN else self._color.greenF()
+            b = component_value if c == self.RGBA_BLUE else self._color.blueF()
+            a = component_value if c == self.RGBA_ALPHA else self._color.alphaF()
             self._color.setRgbF(r, g, b)
             self._color.setAlphaF(a)
         else:
             c = self._component
             a = self._color.alphaF()
-            h = component_value if c == self.hsvHue else self._color.hsvHueF()
-            s = component_value if c == self.hsvSaturation else self._color.hsvSaturationF()
-            v = component_value if c == self.hsvValue else self._color.valueF()
+            h = component_value if c == self.HSV_HUE else self._color.hsvHueF()
+            s = component_value if c == self.HSV_SATURATION else self._color.hsvSaturationF()
+            v = component_value if c == self.HSV_VALUE else self._color.valueF()
             self._color.setHsvF(h, s, v)
             self._color.setAlphaF(a)
 
@@ -463,11 +536,10 @@ class ComponentSlider(ColorWidget):
 
     def mousePressEvent(self, event):
         self._update_color(event.pos())
-        self.colorChanged.emit(self._color)
 
     def mouseMoveEvent(self, event):
         self._update_color(event.pos())
-        self.colorChanged.emit(self._color)
+        self.colorChanged.emit(QtGui.QColor(self._color))
 
     def mouseReleaseEvent(self, event):
         self._update_color(event.pos())
@@ -535,6 +607,7 @@ class HueSaturationWheel(ColorWidget):
         self._color = QtGui.QColor(255, 255, 255)
         self._wheel_img = None
         self._marker_pos = QtCore.QPointF(0, 0)
+        self.setMinimumSize(10, 10)
 
     def updateColor(self, color):
         """
