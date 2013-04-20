@@ -190,32 +190,32 @@ class ColorPicker(ColorWidget):
 
             self._value_slider = ComponentSlider(ComponentSlider.HSV_VALUE)
             self._value_slider.setMinimumWidth(size)
-            self._value_slider.setDirection(ComponentSlider.Vertical)
+            self._value_slider.setDirection(ComponentSlider.VERTICAL)
             self._value_slider.setGradient(QtCore.Qt.black, QtCore.Qt.white)
 
             self._red_slider = ComponentSlider(ComponentSlider.RGBA_RED)
             self._red_slider.setMinimumHeight(size)
             self._red_slider.setMaximumHeight(size)
             self._red_slider.setContentsMargins(4, 0, 0, 0)
-            self._red_slider.setDirection(ComponentSlider.Horizontal)
+            self._red_slider.setDirection(ComponentSlider.HORIZONTAL)
             self._red_slider.setGradient(QtCore.Qt.black, QtCore.Qt.red)
 
             self._green_slider = ComponentSlider(ComponentSlider.RGBA_GREEN)
             self._green_slider.setMinimumHeight(size)
             self._green_slider.setMaximumHeight(size)
-            self._green_slider.setDirection(ComponentSlider.Horizontal)
+            self._green_slider.setDirection(ComponentSlider.HORIZONTAL)
             self._green_slider.setGradient(QtCore.Qt.black, QtCore.Qt.green)
 
             self._blue_slider = ComponentSlider(ComponentSlider.RGBA_BLUE)
             self._blue_slider.setMinimumHeight(size)
             self._blue_slider.setMaximumHeight(size)
-            self._blue_slider.setDirection(ComponentSlider.Horizontal)
+            self._blue_slider.setDirection(ComponentSlider.HORIZONTAL)
             self._blue_slider.setGradient(QtCore.Qt.black, QtCore.Qt.blue)
 
             self._alpha_slider = ComponentSlider(ComponentSlider.RGBA_ALPHA)
             self._alpha_slider.setMinimumHeight(size)
             self._alpha_slider.setMaximumHeight(size)
-            self._alpha_slider.setDirection(ComponentSlider.Horizontal)
+            self._alpha_slider.setDirection(ComponentSlider.HORIZONTAL)
             self._alpha_slider.setGradient(QtGui.QColor(255, 255, 255, 0),
                                            QtGui.QColor(255, 255, 255, 255))
 
@@ -417,8 +417,8 @@ class ComponentSlider(ColorWidget):
     Although it only manipulates a single component, it holds a QColor for convenience.
     """
 
-    Horizontal = 0
-    Vertical = 1
+    HORIZONTAL = 0
+    VERTICAL = 1
     """
     Direction of the slider.
     """
@@ -434,6 +434,16 @@ class ComponentSlider(ColorWidget):
     Supported QColor components.
     """
 
+    _component_names = {HORIZONTAL: 'Horizontal',
+                        VERTICAL: 'Vertical',
+                        HSV_HUE: 'Hue',
+                        HSV_VALUE: 'Value',
+                        HSV_SATURATION: 'Saturation',
+                        RGBA_RED: 'Red',
+                        RGBA_GREEN: 'Green',
+                        RGBA_BLUE: 'Blue',
+                        RGBA_ALPHA: 'Alpha'}
+
     def __init__(self, component, parent=None):
         """
         Constructs a ComponentSlider instance.
@@ -443,7 +453,7 @@ class ComponentSlider(ColorWidget):
         """
         super(ComponentSlider, self).__init__(parent)
 
-        self._direction = self.Horizontal
+        self._direction = self.HORIZONTAL
 
         self._gradient_color1 = QtCore.Qt.white
         self._gradient_color2 = QtCore.Qt.black
@@ -462,7 +472,7 @@ class ComponentSlider(ColorWidget):
         """
         Sets the direction of this slider.
         :param direction: The direction.
-        :type direction: Either of the class variables Horizontal, and Vertical.
+        :type direction: Either of the class variables HORIZONTAL, and VERTICAL.
         """
         self._direction = direction
 
@@ -498,44 +508,44 @@ class ComponentSlider(ColorWidget):
         if self._component == self.HSV_VALUE:
             return self._color.valueF()
 
+    def _update_component(self, value):
+        if self._component in [self.RGBA_RED, self.RGBA_GREEN, self.RGBA_BLUE, self.RGBA_ALPHA]:
+            c = self._component
+            r = value if c == self.RGBA_RED else self._color.redF()
+            g = value if c == self.RGBA_GREEN else self._color.greenF()
+            b = value if c == self.RGBA_BLUE else self._color.blueF()
+            a = value if c == self.RGBA_ALPHA else self._color.alphaF()
+            self._color.setRgbF(r, g, b)
+            self._color.setAlphaF(a)
+        elif self._component in [self.HSV_HUE, self.HSV_SATURATION, self.HSV_VALUE]:
+            c = self._component
+            a = self._color.alphaF()
+            h = value if c == self.HSV_HUE else self._color.hsvHueF()
+            s = value if c == self.HSV_SATURATION else self._color.hsvSaturationF()
+            v = value if c == self.HSV_VALUE else self._color.valueF()
+            self._color.setHsvF(h, s, v)
+            self._color.setAlphaF(a)
+        else:
+            return
+
+        self.repaint()
+
     def _update_color(self, pos):
-        if self._component not in [self.RGBA_RED,
-                                   self.RGBA_GREEN,
-                                   self.RGBA_BLUE,
-                                   self.RGBA_ALPHA,
-                                   self.HSV_HUE,
-                                   self.HSV_SATURATION,
-                                   self.HSV_VALUE]:
+        if self._component not in self._component_names.iterkeys():
             return
 
         rect = self.rect()
 
-        if self._direction == self.Vertical:
+        if self._direction == self.VERTICAL:
             component_value = 1 - float(self._clamp(pos.y(), rect.top(), rect.bottom())) / float(rect.bottom() - rect.top())
         else:
             component_value = float(self._clamp(pos.x(), rect.left(), rect.right())) / float(rect.right() - rect.left())
 
-        if self._component in [self.RGBA_RED, self.RGBA_GREEN, self.RGBA_BLUE, self.RGBA_ALPHA]:
-            c = self._component
-            r = component_value if c == self.RGBA_RED else self._color.redF()
-            g = component_value if c == self.RGBA_GREEN else self._color.greenF()
-            b = component_value if c == self.RGBA_BLUE else self._color.blueF()
-            a = component_value if c == self.RGBA_ALPHA else self._color.alphaF()
-            self._color.setRgbF(r, g, b)
-            self._color.setAlphaF(a)
-        else:
-            c = self._component
-            a = self._color.alphaF()
-            h = component_value if c == self.HSV_HUE else self._color.hsvHueF()
-            s = component_value if c == self.HSV_SATURATION else self._color.hsvSaturationF()
-            v = component_value if c == self.HSV_VALUE else self._color.valueF()
-            self._color.setHsvF(h, s, v)
-            self._color.setAlphaF(a)
-
-        self.repaint()
+        self._update_component(component_value)
 
     def mousePressEvent(self, event):
         self._update_color(event.pos())
+        self.colorChanged.emit(QtGui.QColor(self._color))
 
     def mouseMoveEvent(self, event):
         self._update_color(event.pos())
@@ -543,6 +553,28 @@ class ComponentSlider(ColorWidget):
 
     def mouseReleaseEvent(self, event):
         self._update_color(event.pos())
+
+    def mouseDoubleClickEvent(self, event):
+        value = self._get_component_value()
+
+        # can't use getDouble() because we need to update the dialog position...
+        dialog = QtGui.QInputDialog(self, QtCore.Qt.Popup)
+        dialog.setInputMode(QtGui.QInputDialog.DoubleInput)
+        dialog.setDoubleRange(0.0, 1.0)
+        dialog.setDoubleDecimals(4)
+        dialog.setDoubleValue(value)
+        dialog.setLabelText(self._component_names.get(self._component, "Unknown"))
+
+        def _update(value):
+            self._update_component(value)
+            self.colorChanged.emit(QtGui.QColor(self._color))
+        dialog.doubleValueSelected.connect(_update)
+
+        dialog.show()
+        pos = QtGui.QCursor.pos()
+        pos.setX(pos.x() - dialog.geometry().width() / 2)
+        pos.setY(pos.y() - dialog.height() / 2)
+        dialog.move(pos)
 
     def paintEvent(self, event):
         rect = self.rect()
@@ -554,7 +586,7 @@ class ComponentSlider(ColorWidget):
         size = min(rect.width(), rect.height()) * 0.5
         _draw_checkerboard(painter, rect, size)
 
-        if self._direction == self.Vertical:
+        if self._direction == self.VERTICAL:
             gradient = QtGui.QLinearGradient(rect.bottomLeft(), rect.topLeft())
         else:
             gradient = QtGui.QLinearGradient(rect.topLeft(), rect.topRight())
@@ -562,7 +594,7 @@ class ComponentSlider(ColorWidget):
         gradient.setColorAt(1, self._gradient_color2)
         painter.fillRect(rect, gradient)
 
-        if self._direction == self.Vertical:
+        if self._direction == self.VERTICAL:
             pos = rect.height() - self._get_component_value() * (rect.bottom() - rect.top())
             line2 = QtCore.QLineF(rect.left(), pos, rect.right(), pos)
             line1 = line2.translated(0, -1)
