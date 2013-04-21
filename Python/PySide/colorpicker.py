@@ -328,7 +328,7 @@ class ColorHexEdit(ColorWidget):
         layout.addWidget(hash_label)
 
         self._line_edit = QtGui.QLineEdit()
-        self._line_edit.setInputMask("HHHHHHHH")
+        self._line_edit.setInputMask("HHHHHHHH;0")
         self._line_edit.setPlaceholderText("AARRGGBB")
         self._line_edit.setToolTip(self.tr("A hexadecimal value on the form AARRGGBB:\n\nAA = alpha\nRR = red\nGG = green\nBB = blue"))
         font = QtGui.QFont("Monospace")
@@ -337,10 +337,25 @@ class ColorHexEdit(ColorWidget):
 
         self.updateColor(self.color())
 
+        self._line_edit.setFixedWidth(self._get_edit_width())
+
         self._line_edit.textEdited.connect(self._on_text_edited)
 
         layout.addWidget(self._line_edit)
         self.setLayout(layout)
+
+    def _get_edit_width(self):
+        fm = self._line_edit.fontMetrics()
+        style = self._line_edit.style()
+        option = QtGui.QStyleOptionFrame()
+        self._line_edit.initStyleOption(option)
+        width = fm.width("00000000")
+        width += style.pixelMetric(QtGui.QStyle.PM_DefaultFrameWidth, option, self._line_edit) * 2
+        width += style.pixelMetric(QtGui.QStyle.PM_TextCursorWidth, option, self._line_edit)
+        height = fm.height()
+        size = QtCore.QSize(width, height)
+        size = style.sizeFromContents(style.CT_LineEdit, option, size, self._line_edit)
+        return size.width()
 
     def _color_to_string(self, color):
         a = color.alpha()
