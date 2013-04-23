@@ -306,6 +306,17 @@ class ColorPicker(ColorWidget):
                     x.updateColor(color)
             super(ColorPicker._Popup, self).updateColor(color)
 
+        def show(self):
+            super(ColorPicker._Popup, self).show()
+
+            pos = self.pos()
+            rect = QtGui.QApplication.desktop().screenGeometry(self)
+            if pos.x() + self.width() > rect.x() + rect.width():
+                pos.setX(rect.x() + rect.width() - self.width())
+            if pos.y() + self.height() > rect.y() + rect.height():
+                pos.setY(rect.y() + rect.height() - self.height())
+            self.move(pos)
+
 
 class ColorHexEdit(ColorWidget):
     """
@@ -328,7 +339,7 @@ class ColorHexEdit(ColorWidget):
         layout.addWidget(hash_label)
 
         self._line_edit = QtGui.QLineEdit()
-        self._line_edit.setInputMask("HHHHHHHH;0")
+        self._line_edit.setInputMask("HHHHHHHH")
         self._line_edit.setPlaceholderText("AARRGGBB")
         self._line_edit.setToolTip(self.tr("A hexadecimal value on the form AARRGGBB:\n\nAA = alpha\nRR = red\nGG = green\nBB = blue"))
         font = QtGui.QFont("Monospace")
