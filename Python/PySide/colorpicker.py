@@ -159,12 +159,20 @@ class ColorPicker(ColorWidget):
 
         def __init__(self, parent=None):
             """
-            Constructs a ColorPicker instance.
+            Constructs a ColorPicker._Popup instance.
             :param parent: parent widget (optional)
             """
             super(ColorWidget, self).__init__(parent)
 
             self.setWindowFlags(QtCore.Qt.Popup)
+
+            main_layout = QtGui.QVBoxLayout()
+            self._frame = QtGui.QFrame()
+            self._frame.setFrameStyle(QtGui.QFrame.Panel)
+            self._frame.setFrameShadow(QtGui.QFrame.Raised)
+            main_layout.setContentsMargins(0, 0, 0, 0)
+            main_layout.addWidget(self._frame)
+            self.setLayout(main_layout)
 
             layout = QtGui.QVBoxLayout()
             self._hex = ColorHexEdit()
@@ -274,9 +282,11 @@ class ColorPicker(ColorWidget):
             layout.addLayout(mid_layout)
             layout.addLayout(bottom_layout)
 
-            layout.setContentsMargins(0, 0, 5, 5)
+            layout.setContentsMargins(2, 2, 2, 2)
 
-            self.setLayout(layout)
+            self._frame.setLayout(layout)
+
+            self._display.clicked.connect(self.hide)
 
             self._connection_list = [self._wheel,
                               self._hex,
@@ -307,15 +317,18 @@ class ColorPicker(ColorWidget):
             super(ColorPicker._Popup, self).updateColor(color)
 
         def show(self):
-            super(ColorPicker._Popup, self).show()
-
             pos = self.pos()
+            fw = self._frame.lineWidth()
+            margins = self._frame.layout().contentsMargins()
+            pos.setX(pos.x() - margins.left() - fw)
+            pos.setY(pos.y() - margins.top() - fw)
             rect = QtGui.QApplication.desktop().screenGeometry(self)
             if pos.x() + self.width() > rect.x() + rect.width():
                 pos.setX(rect.x() + rect.width() - self.width())
             if pos.y() + self.height() > rect.y() + rect.height():
                 pos.setY(rect.y() + rect.height() - self.height())
             self.move(pos)
+            super(ColorPicker._Popup, self).show()
 
 
 class ColorHexEdit(ColorWidget):
