@@ -101,6 +101,7 @@ class ColorPicker(ColorWidget):
     def __init__(self, parent=None):
         """
         Constructs a ColorPicker instance.
+
         :param parent: parent widget (optional)
         """
         super(ColorWidget, self).__init__(parent)
@@ -129,8 +130,8 @@ class ColorPicker(ColorWidget):
         self._display.clicked.connect(self._on_display_clicked)
 
         self._connection_list = [self._hex,
-                          self._display,
-                          self._popup]
+                                 self._display,
+                                 self._popup]
 
         for x in self._connection_list:
             x.colorChanged.connect(self.updateColor)
@@ -143,6 +144,7 @@ class ColorPicker(ColorWidget):
         Updates the color represented by this widget,
         and all child widgets in it.
         Does not emit a signal.
+
         :param color: The new color.
         :type color: QColor
         """
@@ -160,6 +162,7 @@ class ColorPicker(ColorWidget):
         def __init__(self, parent=None):
             """
             Constructs a ColorPicker._Popup instance.
+
             :param parent: parent widget (optional)
             """
             super(ColorWidget, self).__init__(parent)
@@ -289,13 +292,13 @@ class ColorPicker(ColorWidget):
             self._display.clicked.connect(self.hide)
 
             self._connection_list = [self._wheel,
-                              self._hex,
-                              self._display,
-                              self._value_slider,
-                              self._red_slider,
-                              self._green_slider,
-                              self._blue_slider,
-                              self._alpha_slider]
+                                     self._hex,
+                                     self._display,
+                                     self._value_slider,
+                                     self._red_slider,
+                                     self._green_slider,
+                                     self._blue_slider,
+                                     self._alpha_slider]
 
             for x in self._connection_list:
                 x.colorChanged.connect(self.updateColor)
@@ -308,6 +311,7 @@ class ColorPicker(ColorWidget):
             Updates the color represented by this widget,
             and all child widgets in it.
             Does not emit a signal.
+
             :param color: The new color.
             :type color: QColor
             """
@@ -333,13 +337,15 @@ class ColorPicker(ColorWidget):
 
 class ColorHexEdit(ColorWidget):
     """
-    A text editing widget, configured to manipulate color values on the form of #AARRGGBB,
-    where AA, RR, GG, and BB represents the alpha, red, green and blue channels.
+    A text editing widget, configured to manipulate color values on the form of
+    #AARRGGBB, where AA, RR, GG, and BB represents the
+    alpha, red, green and blue channels.
     """
 
     def __init__(self, parent=None):
         """
         Constructs a ColorHexEdit instance.
+
         :param parent: parent widget (optional)
         """
         super(ColorHexEdit, self).__init__(parent)
@@ -354,7 +360,9 @@ class ColorHexEdit(ColorWidget):
         self._line_edit = QtGui.QLineEdit()
         self._line_edit.setInputMask("HHHHHHHH")
         self._line_edit.setPlaceholderText("AARRGGBB")
-        self._line_edit.setToolTip(self.tr("A hexadecimal value on the form AARRGGBB:\n\nAA = alpha\nRR = red\nGG = green\nBB = blue"))
+        self._line_edit.setToolTip(self.tr('A hexadecimal value on the form '
+                                           'AARRGGBB:\n\nAA = alpha\n'
+                                           'RR = red\nGG = green\nBB = blue'))
         font = QtGui.QFont("Monospace")
         font.setStyleHint(QtGui.QFont.TypeWriter)
         self._line_edit.setFont(font)
@@ -374,11 +382,14 @@ class ColorHexEdit(ColorWidget):
         option = QtGui.QStyleOptionFrame()
         self._line_edit.initStyleOption(option)
         width = fm.width("00000000")
-        width += style.pixelMetric(QtGui.QStyle.PM_DefaultFrameWidth, option, self._line_edit) * 2
-        width += style.pixelMetric(QtGui.QStyle.PM_TextCursorWidth, option, self._line_edit)
+        width += style.pixelMetric(QtGui.QStyle.PM_DefaultFrameWidth,
+                                   option, self._line_edit) * 2
+        width += style.pixelMetric(QtGui.QStyle.PM_TextCursorWidth,
+                                   option, self._line_edit)
         height = fm.height()
         size = QtCore.QSize(width, height)
-        size = style.sizeFromContents(style.CT_LineEdit, option, size, self._line_edit)
+        size = style.sizeFromContents(style.CT_LineEdit,
+                                      option, size, self._line_edit)
         return size.width()
 
     def _color_to_string(self, color):
@@ -393,6 +404,7 @@ class ColorHexEdit(ColorWidget):
         """
         Overridden from base class.
         Updates the text string to match the provided color.
+
         :param color: The new color.
         :type color: QColor
         """
@@ -430,6 +442,7 @@ class ColorDisplay(ColorWidget):
     def __init__(self, parent=None):
         """
         Constructs a ColorDisplay instance.
+
         :param parent: parent widget (optional)
         """
         super(ColorDisplay, self).__init__(parent)
@@ -453,7 +466,8 @@ class ColorDisplay(ColorWidget):
 class ComponentSlider(ColorWidget):
     """
     A custom slider for manipulating a color component.
-    Although it only manipulates a single component, it holds a QColor for convenience.
+    Although it only manipulates a single component,
+    it holds a QColor for convenience.
     """
 
     HORIZONTAL = 0
@@ -486,8 +500,11 @@ class ComponentSlider(ColorWidget):
     def __init__(self, component, parent=None):
         """
         Constructs a ComponentSlider instance.
+
         :param component: The component managed by this slider.
-        :type component: Any of class variables HSV_HUE, HSV_VALUE, HSV_SATURATION, RGBA_RED, RGBA_GREEN, RGBA_BLUE, RGBA_ALPHA
+        :type component:
+          Any of class variables HSV_HUE, HSV_VALUE, HSV_SATURATION,
+          RGBA_RED, RGBA_GREEN, RGBA_BLUE, RGBA_ALPHA
         :param parent: parent widget (optional)
         """
         super(ComponentSlider, self).__init__(parent)
@@ -501,8 +518,11 @@ class ComponentSlider(ColorWidget):
     def setActiveComponent(self, component):
         """
         Sets the color component managed by this slider.
+
         :param component: The new component.
-        :type component: Any of class variables HSV_HUE, HSV_VALUE, HSV_SATURATION, RGBA_RED, RGBA_GREEN, RGBA_BLUE, RGBA_ALPHA
+        :type component:
+          Any of class variables HSV_HUE, HSV_VALUE, HSV_SATURATION, RGBA_RED,
+          RGBA_GREEN, RGBA_BLUE, RGBA_ALPHA
         :type color: QColor
         """
         self._component = component
@@ -510,16 +530,18 @@ class ComponentSlider(ColorWidget):
     def setDirection(self, direction):
         """
         Sets the direction of this slider.
-        :param direction: The direction.
-        :type direction: Either of the class variables HORIZONTAL, and VERTICAL.
+
+        :param direction: The direction
+        :type direction: Either of the class variables HORIZONTAL, and VERTICAL
         """
         self._direction = direction
 
     def setGradient(self, color1, color2):
         """
         Sets the color gradient of this slider's visual representation.
-        :param color1: The first color of the gradient.
-        :param color2: The second color of the gradient.
+
+        :param color1: The first color of the gradient
+        :param color2: The second color of the gradient
         """
         self._gradient_color1 = color1
         self._gradient_color2 = color2
@@ -548,22 +570,25 @@ class ComponentSlider(ColorWidget):
             return self._color.valueF()
 
     def _update_component(self, value):
-        if self._component in [self.RGBA_RED, self.RGBA_GREEN, self.RGBA_BLUE, self.RGBA_ALPHA]:
+        color = self._color
+        if self._component in [self.RGBA_RED, self.RGBA_GREEN,
+                               self.RGBA_BLUE, self.RGBA_ALPHA]:
             c = self._component
-            r = value if c == self.RGBA_RED else self._color.redF()
-            g = value if c == self.RGBA_GREEN else self._color.greenF()
-            b = value if c == self.RGBA_BLUE else self._color.blueF()
-            a = value if c == self.RGBA_ALPHA else self._color.alphaF()
-            self._color.setRgbF(r, g, b)
-            self._color.setAlphaF(a)
-        elif self._component in [self.HSV_HUE, self.HSV_SATURATION, self.HSV_VALUE]:
+            r = value if c == self.RGBA_RED else color.redF()
+            g = value if c == self.RGBA_GREEN else color.greenF()
+            b = value if c == self.RGBA_BLUE else color.blueF()
+            a = value if c == self.RGBA_ALPHA else color.alphaF()
+            color.setRgbF(r, g, b)
+            color.setAlphaF(a)
+        elif self._component in [self.HSV_HUE, self.HSV_SATURATION,
+                                 self.HSV_VALUE]:
             c = self._component
-            a = self._color.alphaF()
-            h = value if c == self.HSV_HUE else self._color.hsvHueF()
-            s = value if c == self.HSV_SATURATION else self._color.hsvSaturationF()
-            v = value if c == self.HSV_VALUE else self._color.valueF()
-            self._color.setHsvF(h, s, v)
-            self._color.setAlphaF(a)
+            a = color.alphaF()
+            h = value if c == self.HSV_HUE else color.hsvHueF()
+            s = value if c == self.HSV_SATURATION else color.hsvSaturationF()
+            v = value if c == self.HSV_VALUE else color.valueF()
+            color.setHsvF(h, s, v)
+            color.setAlphaF(a)
         else:
             return
 
@@ -576,9 +601,15 @@ class ComponentSlider(ColorWidget):
         rect = self.rect()
 
         if self._direction == self.VERTICAL:
-            component_value = 1 - float(self._clamp(pos.y(), rect.top(), rect.bottom())) / float(rect.bottom() - rect.top())
+            top = rect.top()
+            bottom = rect.bottom()
+            component_value = 1 - \
+                float(self._clamp(pos.y(), top, bottom)) / float(bottom - top)
         else:
-            component_value = float(self._clamp(pos.x(), rect.left(), rect.right())) / float(rect.right() - rect.left())
+            left = rect.left()
+            right = rect.right()
+            component_value = float(
+                self._clamp(pos.x(), left, right)) / float(right - left)
 
         self._update_component(component_value)
 
@@ -596,13 +627,14 @@ class ComponentSlider(ColorWidget):
     def mouseDoubleClickEvent(self, event):
         value = self._get_component_value()
 
-        # can't use getDouble() because we need to update the dialog position...
+        # can't use getDouble() because we need to update the dialog position.
         dialog = QtGui.QInputDialog(self, QtCore.Qt.Popup)
         dialog.setInputMode(QtGui.QInputDialog.DoubleInput)
         dialog.setDoubleRange(0.0, 1.0)
         dialog.setDoubleDecimals(4)
         dialog.setDoubleValue(value)
-        dialog.setLabelText(self._component_names.get(self._component, "Unknown"))
+        dialog.setLabelText(self._component_names.get(self._component,
+                                                      "Unknown"))
 
         def _update(value):
             self._update_component(value)
@@ -633,13 +665,14 @@ class ComponentSlider(ColorWidget):
         gradient.setColorAt(1, self._gradient_color2)
         painter.fillRect(rect, gradient)
 
+        component = self._get_component_value()
         if self._direction == self.VERTICAL:
-            pos = rect.height() - self._get_component_value() * (rect.bottom() - rect.top())
+            pos = rect.height() - component * (rect.bottom() - rect.top())
             line2 = QtCore.QLineF(rect.left(), pos, rect.right(), pos)
             line1 = line2.translated(0, -1)
             line3 = line2.translated(0, 1)
         else:
-            pos = self._get_component_value() * (rect.right() - rect.left())
+            pos = component * (rect.right() - rect.left())
             line2 = QtCore.QLineF(pos, rect.top(), pos, rect.bottom())
             line1 = line2.translated(-1, 0)
             line3 = line2.translated(1, 0)
@@ -669,6 +702,7 @@ class HueSaturationWheel(ColorWidget):
     def __init__(self, parent=None):
         """
         Constructs a HueSaturationWheel instance.
+
         :param parent: parent widget (optional)
         """
         super(HueSaturationWheel, self).__init__(parent)
@@ -684,6 +718,7 @@ class HueSaturationWheel(ColorWidget):
         """
         Updates the color represented by this widget.
         Does not emit a signal.
+
         :param color: The new color.
         :type color: QColor
         """
@@ -705,7 +740,8 @@ class HueSaturationWheel(ColorWidget):
         distance = sat * radius
 
         center = square.center()
-        line = QtCore.QLineF(center.x(), center.y(), center.x(), center.y() + distance)
+        line = QtCore.QLineF(center.x(), center.y(),
+                             center.x(), center.y() + distance)
         line.setAngle(360.0 - hue * 360.0)
         line.setAngle(line.angle() - 90)
 
@@ -763,14 +799,16 @@ class HueSaturationWheel(ColorWidget):
         distance = sat * radius
 
         center = square.center()
-        line = QtCore.QLineF(center.x(), center.y(), center.x(), center.y() + distance)
+        line = QtCore.QLineF(center.x(), center.y(),
+                             center.x(), center.y() + distance)
         line.setAngle(360.0 - hue * 360.0)
         line.setAngle(line.angle() - 90)
 
         self._marker_pos = line.p2()
 
     def _rebuild_color_wheel(self):
-        self._wheel_img = QtGui.QImage(self._square().size(), QtGui.QImage.Format_ARGB32_Premultiplied)
+        image_format = QtGui.QImage.Format_ARGB32_Premultiplied
+        self._wheel_img = QtGui.QImage(self._square().size(), image_format)
         self._wheel_img.fill(0)
         rect = self._wheel_img.rect()
         painter = QtGui.QPainter(self._wheel_img)
@@ -799,7 +837,8 @@ class HueSaturationWheel(ColorWidget):
             step += 0.1
         painter.fillPath(path, hue)
 
-        # saturation. A bit hackish and may not be pixel perfect, but it's only used as a visual representation...
+        # Saturation. May not be completely accurate,
+        # but it's only used as a visual representation
         saturation = QtGui.QRadialGradient(rect.center(), radius)
         color.setRgbF(value, value, value)
         color.setAlphaF(1)
@@ -846,7 +885,9 @@ class HueSaturationWheel(ColorWidget):
         v = 0 if self._color.valueF() > 0.5 else 255
         pen.setColor(QtGui.QColor(v, v, v))
         painter.setPen(pen)
-        marker = QtCore.QRectF(self._marker_pos.x() - 2, self._marker_pos.y() - 2, 5, 5)
-        painter.drawArc(marker, 0, 5760)  # angles are specified in 1/16 of a degree; draws a full circle
+        marker = QtCore.QRectF(self._marker_pos.x() - 2,
+                               self._marker_pos.y() - 2, 5, 5)
+        # angles are specified in 1/16 of a degree; draws a full circle
+        painter.drawArc(marker, 0, 5760)
 
         painter.restore()
